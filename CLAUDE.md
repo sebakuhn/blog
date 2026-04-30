@@ -45,20 +45,26 @@ Danach die Root Page mit der Integration teilen (Share → Integration einladen)
 - [ ] Farbschema noch offen
 
 ## Setup-Checkliste
-- [ ] Node.js >= 18 installiert (`node --version`)
-- [ ] Repo geklont (`git clone ...`)
-- [ ] `npm install` durchgelaufen
-- [ ] `.env.local` mit Notion API Secret angelegt
-- [ ] `site.config.ts` angepasst (siehe oben)
-- [ ] `npm run dev` läuft lokal (http://localhost:3000)
+- [x] Node.js >= 18 installiert
+- [x] Repo geklont
+- [x] `pnpm install` durchgelaufen (pnpm via `npm install -g pnpm`; PowerShell braucht `& "$env:APPDATA\npm\pnpm.cmd"`)
+- [x] `.env.local` mit Notion API Secret angelegt
+- [x] `site.config.ts` angepasst
+- [x] `pnpm dev` läuft lokal (http://localhost:3000)
 - [ ] Vercel deployment eingerichtet
 - [ ] Custom Design angepasst
 
 ## Aktueller Status
-Setup-Phase – noch nicht gestartet
+Lokal lauffähig. `pnpm install` durch, `.env.local` angelegt, `site.config.ts` angepasst, Bluesky-Support ergänzt. Hydration Warning (dark/light-mode) ist ein bekanntes Starter-Kit-Problem, kein Blocker.
+
+Offene Punkte:
+- [ ] Notion Buttons → verlinkten Text ersetzen (react-notion-x rendert Button-Blöcke nicht korrekt)
+- [ ] Vercel Deployment einrichten
+- [ ] Custom Domain (sebakuhn.de oder Vercel-Subdomain) festlegen und in `site.config.ts` eintragen
+- [ ] Design anpassen (Font, Farben)
 
 ## Nächster Schritt
-`npm install` ausführen, dann `.env.local` anlegen und `site.config.ts` anpassen.
+Vercel Deployment einrichten (GitHub Repo verbinden → Vercel importieren → `NOTION_API_SECRET` als Environment Variable eintragen).
 
 ## Hinweise / Learnings
 - isRedisEnabled: false lassen (kein Redis-Setup nötig)
