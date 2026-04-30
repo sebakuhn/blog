@@ -2,25 +2,26 @@ import { siteConfig } from './lib/site-config'
 
 export default siteConfig({
   // the site's root Notion page (required)
-  rootNotionPageId: '7875426197cf461698809def95960ebf',
+  rootNotionPageId: '17246312895c814e8219d8d801a40cdc',
 
   // if you want to restrict pages to a single notion workspace (optional)
   // (this should be a Notion ID; see the docs for how to extract this)
   rootNotionSpaceId: null,
 
   // basic site info (required)
-  name: 'Next.js Notion Starter Kit',
-  domain: 'nextjs-notion-starter-kit.transitivebullsh.it',
-  author: 'Travis Fischer',
+  name: 'Sebastian Kuhn',
+  domain: 'sebakuhn.vercel.app',
+  author: 'Sebastian Kuhn',
 
   // open graph metadata (optional)
-  description: 'Example Next.js Notion Starter Kit Site',
+  description: 'Blog über Musik & Kultur, Politik & Gesellschaft, Daten & KI',
 
   // social usernames (optional)
-  twitter: 'transitive_bs',
-  github: 'transitive-bullshit',
-  linkedin: 'fisch2',
-  // mastodon: '#', // optional mastodon profile URL, provides link verification
+  twitter: null,
+  github: 'sebakuhn',
+  linkedin: 'sebastian-kuhn-b69ba1144',
+  mastodon: 'https://mastodon.social/@Sebastian_Kuhn',
+  bluesky: 'sebastiankuhn.bsky.social',
   // newsletter: '#', // optional newsletter URL
   // youtube: '#', // optional youtube channel name or `channel/UCGbXXXXXXXXXXXXXXXXXXXXXX`
 
