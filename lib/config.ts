@@ -58,6 +58,7 @@ export const language: string = getSiteConfig('language', 'en')
 // social accounts
 export const twitter: string | undefined = getSiteConfig('twitter')
 export const mastodon: string | undefined = getSiteConfig('mastodon')
+export const bluesky: string | undefined = getSiteConfig('bluesky')
 export const github: string | undefined = getSiteConfig('github')
 export const youtube: string | undefined = getSiteConfig('youtube')
 export const linkedin: string | undefined = getSiteConfig('linkedin')
