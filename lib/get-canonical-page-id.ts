@@ -25,6 +25,11 @@ const umlauts: Array<[RegExp, string]> = [
 // german titles: "Über mich" -> "ber-mich", "Fünf" -> "fnf". Map the umlauts to
 // their conventional ASCII spelling first, then strip diacritics from any
 // remaining latin characters (é -> e) so they survive as letters too.
+//
+// The NFKD pass is deliberately restricted to the latin supplement/extended
+// blocks. Applying it to the whole string would also decompose hangul syllables
+// into jamo (which normalizeTitle then discards entirely, leaving an empty
+// slug) and split the dakuten off japanese kana ("ページ" -> "ヘーシ").
 function transliterate(title: string): string {
   let result = title
 
@@ -32,7 +37,9 @@ function transliterate(title: string): string {
     result = result.replace(pattern, replacement)
   }
 
-  return result.normalize('NFKD').replaceAll(/[̀-ͯ]/g, '')
+  return result.replaceAll(/[À-ɏ]/g, (char) =>
+    char.normalize('NFKD').replaceAll(/[̀-ͯ]/g, '')
+  )
 }
 
 function slugify(title: string): string {
