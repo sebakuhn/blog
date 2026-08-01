@@ -8,27 +8,27 @@ Notion bleibt das CMS, das Frontend wird unabhängig gehosted.
 - **Framework:** nextjs-notion-starter-kit (React-Notion-X + Next.js)
 - **Hosting:** Vercel (kostenlos)
 - **Datenquelle:** Notion API (kein Notion Pro erforderlich)
-- **Repo:** github.com/DEIN-USERNAME/blog
+- **Repo:** github.com/sebakuhn/blog (Push auf `main` → Vercel deployt automatisch)
 
 ## Notion
 - Root Page ID: `17246312895c814e8219d8d801a40cdc`
 - Root Page URL: https://www.notion.so/Hallo-Ich-bin-Sebastian-Kuhn-17246312895c814e8219d8d801a40cdc
 - Kategorien: Musik & Kultur, Politik & Gesellschaft, Daten/Statistik & KI
-- Aktuell publiziert via: sebakuhn.notion.site (soll abgelöst werden)
+- Aktuell publiziert via: sebakuhn.notion.site (soll abgelöst werden). Die Domain `sebakuhn.de`
+  liegt bei IONOS und leitet momentan noch dorthin weiter.
 
-## site.config.ts – anzupassende Felder
+## site.config.ts – Ist-Stand
 ```typescript
-rootNotionPageId: '17246312895c814e8219d8d801a40cdc'  // Root Page ID
-rootNotionSpaceId: null                                 // optional, vorerst leer lassen
+rootNotionPageId: '17246312895c814e8219d8d801a40cdc'
+rootNotionSpaceId: null
 name: 'Sebastian Kuhn'
-domain: 'DOMAIN'                                        // z.B. sebakuhn.de oder vercel-subdomain
+domain: 'blog-one-sage.vercel.app'   // beim Umzug auf 'sebakuhn.de' -> danach neu builden
 author: 'Sebastian Kuhn'
 description: 'Blog über Musik & Kultur, Politik & Gesellschaft, Daten & KI'
-twitter: null                                           // falls gewünscht eintragen
-github: null
-linkedin: null
-navigationStyle: 'default'                             // später ggf. auf 'custom' umstellen
+navigationStyle: 'default'           // später ggf. auf 'custom' umstellen
 ```
+**Ungenutzte Social-Felder bleiben auskommentiert, nicht `null`.** `twitter: null` bricht den Build
+ab (`TS2322`) – Details unter "Behobene Fixes".
 
 ## Umgebungsvariablen
 **Es ist keine einzige Env-Variable nötig** – auch nicht auf Vercel.
@@ -193,3 +193,15 @@ wurde – vermutlich der Grund für den Stillstand. Beide Repos sind aktiv (Merg
 - `next/legacy/image` ist deprecated; react-notion-x unterstützt auch `nextImage`. Wechsel möglich
   (`NotionPage.tsx` Z. 3 + `nextLegacyImage:` → `nextImage:`), aber `fill` verhält sich anders als
   `layout="fill"` – visuell nachprüfen. Kein Handlungsdruck.
+- **Dependency-Pflege:** gelegentlich `pnpm update && pnpm audit --prod && pnpm build`. `--prod` ist
+  entscheidend – das volle Audit meldet ~31 Funde, davon der Großteil in der ESLint-Toolchain, die
+  nie im Bundle landet. Was übrig bleibt, steckt in Fremdpaketen und ist nur über deren Releases zu
+  beheben. Notnagel wäre `pnpm.overrides` in `package.json` (erzwingt eine Version quer durch den
+  Baum, am Maintainer vorbei) – kann Dinge brechen, nur mit Build-Check danach.
+- Advisory-Schweregrade nicht ungeprüft übernehmen: `postcss`/`@babel/core`/`sharp` laufen hier nur
+  zur **Build-Zeit** über eigenen Input, `js-cookie` läuft im Browser, aber die Seite hat weder Login
+  noch Session-Cookies. Statischer Blog ohne Nutzerdaten = kaum Angriffsfläche.
+- `pnpm audit` beendet sich mit **Exit-Code 1**, sobald irgendein Fund existiert – das ist kein
+  Werkzeugfehler und taugt hier nicht als CI-Gate.
+- pnpm-JSON-Ausgaben (`--json`) haben ein **UTF-8-BOM**; `JSON.parse` scheitert daran. Vor dem
+  Parsen `.replace(/^﻿/, '')`.
