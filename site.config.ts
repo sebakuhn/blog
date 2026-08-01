@@ -17,7 +17,7 @@ export default siteConfig({
   description: 'Blog über Musik & Kultur, Politik & Gesellschaft, Daten & KI',
 
   // social usernames (optional)
-  twitter: null,
+  // twitter: '#', // optional twitter username (without the @)
   github: 'sebakuhn',
   linkedin: 'sebastian-kuhn-b69ba1144',
   mastodon: 'https://mastodon.social/@Sebastian_Kuhn',
