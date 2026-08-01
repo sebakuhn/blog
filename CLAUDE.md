@@ -87,11 +87,23 @@ Lokal lauffähig, `next build` grün (18 Seiten), `tsc --noEmit` und ESLint saub
   && parent_table === 'collection'`). (2) Gelesen wurden `'Last Updated'`/`'Published'`/`'Description'` –
   existieren alle nicht, die Property heißt **`Publication Date`**. Jeder Eintrag bekam dadurch
   `new Date()` = Build-Zeit. Fallback ist jetzt `block.created_time`, Items werden nach Datum sortiert.
+
+  Beides ist **bewusst projektspezifisch** und gehört nicht upstream: Der Maintainer hat zur Filterlogik
+  in Issue #303 geschrieben, sie sei "really subjective logic", man solle Bedingungen nach Bedarf
+  entfernen. Und `'Publication Date'` ist der Name in *unserer* Notion-DB. Bei Schema-Änderungen in Notion
+  muss diese Zeile mitgezogen werden.
 - **Umlaut-URLs:** `normalizeTitle` aus notion-utils *löscht* Nicht-ASCII statt zu transliterieren
   ("Über mich" → `ber-mich`, "Fünf" → `fnf`). `lib/get-canonical-page-id.ts` transliteriert jetzt
   ü→ue/ö→oe/ä→ae/ß→ss, strippt Diakritika und kollabiert doppelte Bindestriche. Eine manuelle
   `Slug`-Property in Notion hat weiterhin Vorrang. Erzeugung *und* Auflösung laufen durch diese Funktion,
   bleibt also konsistent.
+
+  **Falle – NFKD nicht global anwenden.** Der erste Versuch normalisierte den ganzen Titel per NFKD und
+  hat damit nicht-lateinische Schriften zerstört: Hangul-Silben zerfallen in Jamo, die `normalizeTitle`
+  danach komplett verwirft (→ **leerer Slug**, Seite bekommt nur noch die nackte ID), und bei japanischen
+  Kana wird das Dakuten abgetrennt ("ページ" → "ヘーシ"). Die Zerlegung ist deshalb auf die lateinischen
+  Blöcke `U+00C0–U+024F` beschränkt. Bei Änderungen an der Funktion gegen CJK/Hangul gegentesten, nicht
+  nur gegen Deutsch.
 - **Analytics entfernt:** `posthog-js` + `fathom-client` waren in `pages/_app.tsx` **statisch** importiert
   (nur `init()` war per Env-Var gated), landeten also im Client-Bundle obwohl unbenutzt – inkl. der
   einzigen kritischen CVE (`protobufjs`-RCE) plus 5 high / 18 moderate. Raus aus `_app.tsx`,
@@ -129,6 +141,19 @@ Vor dem Deployment beachten:
 - `pages/api/social-image.tsx` (Edge Runtime) liegt bei ca. 1,03 MB gzip und damit am Vercel-Limit
   für den Hobby-Plan (1 MB). Falls der Deploy mit "Edge Function size exceeded" scheitert: Route
   entfernen (dann greift das Notion-Cover als OG-Bild) oder auf Node-Runtime umstellen.
+
+## Fork / Upstream
+Das Repo ist ein Fork von `transitive-bullshit/nextjs-notion-starter-kit` (582 Commits, davon nur ~14
+eigene). Remotes: `origin` = eigenes Repo, `upstream` = Original (Push dort lokal auf `DISABLED` gesetzt,
+nur noch `git fetch upstream` möglich).
+
+Achtung: `normalizeTitle` und `getCanonicalPageId` liegen **nicht** im Starter-Kit, sondern in
+`NotionX/react-notion-x` (Paket `notion-utils`) – zwei verschiedene Repos, gleicher Maintainer.
+
+Stand der Umlaut-Frage upstream (geprüft 08/2026): Issue #422 ist geschlossen, der zugehörige PR #423
+("add transliteration module") ist **seit Januar 2023 offen**. Er ersetzt `normalizeTitle` komplett durch
+generisches `slugify` und würde damit die CJK-Unterstützung zerstören, die extra wegen Issue #176 ergänzt
+wurde – vermutlich der Grund für den Stillstand. Beide Repos sind aktiv (Merges bis Mai 2026).
 
 ## Hinweise / Learnings
 - isRedisEnabled: false lassen (kein Redis-Setup nötig; `lib/db.ts` fällt auf In-Memory-Keyv zurück,
