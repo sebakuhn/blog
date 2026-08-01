@@ -10,7 +10,9 @@ export default siteConfig({
 
   // basic site info (required)
   name: 'Sebastian Kuhn',
-  domain: 'sebakuhn.vercel.app',
+  // must match the actually reachable domain; baked into canonical URLs,
+  // og:image, RSS and sitemap at build time -- switch to sebakuhn.de on cutover
+  domain: 'blog-one-sage.vercel.app',
   author: 'Sebastian Kuhn',
 
   // open graph metadata (optional)
