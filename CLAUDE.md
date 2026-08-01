@@ -63,7 +63,7 @@ Optional, alle nicht gesetzt: `NOTION_API_BASE_URL` (Proxy), `NEXT_PUBLIC_FATHOM
 
 ## Aktueller Status
 Live auf Vercel: **https://blog-one-sage.vercel.app** (Projekt `seba25/sebakuhn`, Branch `main`,
-Auto-Deploy bei Push). `next build` grün (18 Seiten), `tsc --noEmit` und ESLint sauber.
+Auto-Deploy bei Push). `next` 16.2.12, `next build` grün (18 Seiten), `tsc --noEmit` und ESLint sauber.
 
 Nach dem ersten Deploy gegen die Live-URL verifiziert: robots.txt, Canonical, `og:url`, RSS (9 Items
 mit korrekten Links) zeigen alle auf die konfigurierte Domain; `/api/social-image` liefert 200 (PNG,
@@ -135,7 +135,10 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
 - [ ] Design anpassen (Font, Farben)
 - [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
       (`components/PageSocial.tsx` hat keinen Mastodon-Eintrag, es fehlt auch ein Icon in `lib/icons/`)
-- [ ] `next` 16.2.0 → 16.2.12 (Patch-Update, räumt 15 high Advisories)
+- [ ] Restliche Advisories sind **nicht selbst behebbar** – alle stecken in Abhängigkeiten fremder
+      Pakete: `postcss` (3×, in `next` selbst), `js-cookie` (via `react-use`), `sharp` (via
+      `lqip-modern`, nur Build-Zeit für Preview-Bilder), `@babel/core` (low, via `styled-jsx`).
+      Nur mit Upstream-Updates lösbar, gelegentlich `pnpm audit --prod` gegenprüfen.
 - [ ] `.bluesky`-Klasse in `components/PageSocial.module.css` fehlt (Button rendert, kein Hover-Branding)
 - [ ] `kyOptions` in `lib/get-site-map.ts:36` heißt in notion-client 7.10 `ofetchOptions` → Timeout
       wird still verworfen
