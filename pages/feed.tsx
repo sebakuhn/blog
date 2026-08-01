@@ -1,11 +1,9 @@
 import type { GetServerSideProps } from 'next'
 import { type ExtendedRecordMap } from 'notion-types'
 import {
-  getBlockParentPage,
   getBlockTitle,
   getBlockValue,
-  getPageProperty,
-  idToUuid
+  getPageProperty
 } from 'notion-utils'
 import RSS from 'rss'
 
@@ -35,6 +33,11 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     ttl: ttlMinutes
   })
 
+  const items: Array<{
+    date: Date
+    options: Parameters<typeof feed.item>[0]
+  }> = []
+
   for (const pagePath of Object.keys(siteMap.canonicalPageMap)) {
     const pageId = siteMap.canonicalPageMap[pagePath]!
     const recordMap = siteMap.pageMap[pageId] as ExtendedRecordMap
@@ -44,11 +47,12 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     const block = getBlockValue(recordMap?.block?.[keys[0]!])
     if (!block) continue
 
-    const parentPage = getBlockParentPage(block, recordMap)
+    // a blog post is any page whose parent is a collection (database), matching
+    // the check in `components/NotionPage.tsx`. don't compare against the root
+    // page here: `getBlockParentPage` can't resolve a collection parent and
+    // returns undefined, which silently emptied the entire feed.
     const isBlogPost =
-      block.type === 'page' &&
-      block.parent_table === 'collection' &&
-      parentPage?.id === idToUuid(config.rootNotionPageId)
+      block.type === 'page' && block.parent_table === 'collection'
     if (!isBlogPost) {
       continue
     }
@@ -58,31 +62,39 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
       getPageProperty<string>('Description', block, recordMap) ||
       config.description
     const url = getCanonicalPageUrl(config.site, recordMap)(pageId)
-    const lastUpdatedTime = getPageProperty<number>(
-      'Last Updated',
+
+    // 'Publication Date' is the actual property name in the notion database;
+    // fall back to the block's own timestamp rather than to "now"
+    const publicationDate = getPageProperty<number>(
+      'Publication Date',
       block,
       recordMap
     )
-    const publishedTime = getPageProperty<number>('Published', block, recordMap)
-    const date = lastUpdatedTime
-      ? new Date(lastUpdatedTime)
-      : publishedTime
-        ? new Date(publishedTime)
-        : new Date()
+    const date = new Date(publicationDate || block.created_time)
     const socialImageUrl = getSocialImageUrl(pageId)
 
-    feed.item({
-      title,
-      url,
+    items.push({
       date,
-      description,
-      enclosure: socialImageUrl
-        ? {
-            url: socialImageUrl,
-            type: 'image/jpeg'
-          }
-        : undefined
+      options: {
+        title,
+        url,
+        date,
+        description,
+        enclosure: socialImageUrl
+          ? {
+              url: socialImageUrl,
+              type: 'image/jpeg'
+            }
+          : undefined
+      }
     })
+  }
+
+  // newest first — the notion traversal order is unrelated to publication date
+  items.sort((a, b) => b.date.getTime() - a.date.getTime())
+
+  for (const { options } of items) {
+    feed.item(options)
   }
 
   const feedText = feed.xml({ indent: true })
