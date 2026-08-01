@@ -58,11 +58,21 @@ Optional, alle nicht gesetzt: `NOTION_API_BASE_URL` (Proxy), `NEXT_PUBLIC_FATHOM
 - [x] ~~`.env.local` mit Notion API Secret angelegt~~ (nicht nötig, s. Umgebungsvariablen)
 - [x] `site.config.ts` angepasst
 - [x] `pnpm dev` läuft lokal (http://localhost:3000)
-- [ ] Vercel deployment eingerichtet
+- [x] Vercel deployment eingerichtet (https://blog-one-sage.vercel.app)
 - [ ] Custom Design angepasst
 
 ## Aktueller Status
-Lokal lauffähig, `next build` grün (18 Seiten), `tsc --noEmit` und ESLint sauber.
+Live auf Vercel: **https://blog-one-sage.vercel.app** (Projekt `seba25/sebakuhn`, Branch `main`,
+Auto-Deploy bei Push). `next build` grün (18 Seiten), `tsc --noEmit` und ESLint sauber.
+
+Nach dem ersten Deploy gegen die Live-URL verifiziert: robots.txt, Canonical, `og:url`, RSS (9 Items
+mit korrekten Links) zeigen alle auf die konfigurierte Domain; `/api/social-image` liefert 200 (PNG,
+26 kB) – das befürchtete Edge-Function-Size-Limit hat *nicht* zugeschlagen.
+
+**Vercel vergibt `.vercel.app`-Subdomains nicht mehr manuell.** Der Dialog unter Settings → Domains
+sucht nur noch *kaufbare* Domains; `sebakuhn.vercel.app` ließ sich nicht zuweisen. Auch das Umbenennen
+des Projekts (`blog` → `sebakuhn`) ändert die bereits vergebene Deployment-Domain nicht – `blog-one-sage`
+ist ein zufällig generierter Name. Deshalb steht `domain` in `site.config.ts` auf `blog-one-sage.vercel.app`.
 
 ### Behobene Fixes (alle verifiziert)
 - **Build war kaputt:** `twitter: null` in `site.config.ts` brach `next build` ab (`TS2322`). Ursache: in
@@ -119,9 +129,9 @@ Diagnostik-Artefakt, kein echter Bug. Achtung: `next build` nutzt weiterhin Turb
 und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-Overlay.
 
 ### Offene Punkte
-- [ ] Notion Buttons → verlinkten Text ersetzen (react-notion-x rendert Button-Blöcke nicht korrekt)
-- [ ] Vercel Deployment einrichten
-- [ ] Custom Domain (sebakuhn.de oder Vercel-Subdomain) festlegen und in `site.config.ts` eintragen
+- [ ] Notion Buttons → verlinkten Text ersetzen (react-notion-x rendert Button-Blöcke nicht korrekt;
+      auf der Live-Seite als graue Kästchen mit Aufschrift "Button" sichtbar)
+- [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
 - [ ] Design anpassen (Font, Farben)
 - [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
       (`components/PageSocial.tsx` hat keinen Mastodon-Eintrag, es fehlt auch ein Icon in `lib/icons/`)
@@ -131,16 +141,25 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
       wird still verworfen
 
 ## Nächster Schritt
-Vercel Deployment einrichten (GitHub Repo verbinden → Vercel importieren). **Keine Environment
-Variable eintragen** – siehe Abschnitt Umgebungsvariablen.
+**Design** (Font, Farben, die drei Kategorien sichtbar machen). Das Deployment steht und aktualisiert
+sich bei jedem Push auf `main` von selbst.
 
-Vor dem Deployment beachten:
-- `domain` in `site.config.ts` muss mit der real erreichbaren Domain übereinstimmen. Sie wird in
-  Canonical-URLs, `og:image`, RSS und Sitemap **ins statische HTML gebacken** – ein Vercel-Domain-Alias
-  allein genügt nicht, bei Domain-Wechsel neu builden.
-- `pages/api/social-image.tsx` (Edge Runtime) liegt bei ca. 1,03 MB gzip und damit am Vercel-Limit
-  für den Hobby-Plan (1 MB). Falls der Deploy mit "Edge Function size exceeded" scheitert: Route
-  entfernen (dann greift das Notion-Cover als OG-Bild) oder auf Node-Runtime umstellen.
+### Danach: Umzug auf sebakuhn.de
+Die Domain liegt bei **IONOS** und leitet aktuell auf die alte `sebakuhn.notion.site` weiter. Bewusst
+ans Ende gelegt, damit die alte Seite bis zum Schluss erreichbar bleibt. Ablauf:
+1. IONOS: Weiterleitung auflösen und auf "DNS verwalten" umstellen – solange die Domain als
+   Weiterleitung konfiguriert ist, blockiert das die DNS-Einträge.
+2. Vercel: Settings → Domains → `sebakuhn.de` + `www.sebakuhn.de` hinzufügen. Die anzulegenden
+   Records **aus dem Dashboard** übernehmen, nicht aus Tutorials – Vercels IPs haben sich geändert.
+3. Records bei IONOS eintragen, TLS macht Vercel automatisch.
+4. `domain: 'sebakuhn.de'` in `site.config.ts` + neu deployen. **Kein Kosmetik-Schritt:** die Domain
+   wird in Canonical-URLs, `og:image`, RSS und Sitemap ins statische HTML gebacken, ein Vercel-Alias
+   allein genügt nicht.
+
+Bewusst nicht getan: Bis zum Umzug läuft die `.vercel.app`-URL crawlbar (`pages/robots.txt.tsx:22`
+schaltet bei `VERCEL_ENV === 'production'` auf `Allow: /`), parallel zur weitergeleiteten Notion-Seite.
+Für die wenigen Tage als Duplicate-Content-Risiko akzeptiert – eine frische, unverlinkte URL indexiert
+Google in dem Zeitraum praktisch nicht.
 
 ## Fork / Upstream
 Das Repo ist ein Fork von `transitive-bullshit/nextjs-notion-starter-kit` (582 Commits, davon nur ~14
