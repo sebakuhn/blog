@@ -4,12 +4,7 @@ import Image from 'next/legacy/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { type PageBlock } from 'notion-types'
-import {
-  formatDate,
-  getBlockTitle,
-  getBlockValue,
-  getPageProperty
-} from 'notion-utils'
+import { getBlockTitle, getBlockValue, getPageProperty } from 'notion-utils'
 import * as React from 'react'
 import BodyClassName from 'react-body-classname'
 import {
@@ -22,6 +17,7 @@ import { useSearchParam } from 'react-use'
 
 import type * as types from '@/lib/types'
 import * as config from '@/lib/config'
+import { formatDateDe } from '@/lib/format-date-de'
 import { mapImageUrl } from '@/lib/map-image-url'
 import { getCanonicalPageUrl, mapPageUrl } from '@/lib/map-page-url'
 import { searchNotion } from '@/lib/search-notion'
@@ -150,26 +146,24 @@ const propertyLastEditedTimeValue = (
   defaultFn: () => React.ReactNode
 ) => {
   if (pageHeader && block?.last_edited_time) {
-    return `Last updated ${formatDate(block?.last_edited_time, {
-      month: 'long'
-    })}`
+    return `Zuletzt aktualisiert am ${formatDateDe(block?.last_edited_time)}`
   }
 
   return defaultFn()
 }
 
 const propertyDateValue = (
-  { data, schema, pageHeader }: any,
+  { data }: any,
   defaultFn: () => React.ReactNode
 ) => {
-  if (pageHeader && schema?.name?.toLowerCase() === 'published') {
-    const publishDate = data?.[0]?.[1]?.[0]?.[1]?.start_date
+  // Upstream this only fired for a property named 'Published', which does not
+  // exist in our database — ours is 'Publication Date', so every date fell
+  // through to notion-utils' en-US default. Format any date property instead,
+  // which also covers the collection cards (they render without pageHeader).
+  const startDate = data?.[0]?.[1]?.[0]?.[1]?.start_date
 
-    if (publishDate) {
-      return `${formatDate(publishDate, {
-        month: 'long'
-      })}`
-    }
+  if (startDate) {
+    return formatDateDe(startDate)
   }
 
   return defaultFn()
