@@ -194,7 +194,6 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
       Pakete: `postcss` (3×, in `next` selbst), `js-cookie` (via `react-use`), `sharp` (via
       `lqip-modern`, nur Build-Zeit für Preview-Bilder), `@babel/core` (low, via `styled-jsx`).
       Nur mit Upstream-Updates lösbar, gelegentlich `pnpm audit --prod` gegenprüfen.
-- [ ] `.bluesky`-Klasse in `components/PageSocial.module.css` fehlt (Button rendert, kein Hover-Branding)
 - [ ] `kyOptions` in `lib/get-site-map.ts:36` heißt in notion-client 7.10 `ofetchOptions` → Timeout
       wird still verworfen
 
