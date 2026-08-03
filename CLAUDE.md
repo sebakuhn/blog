@@ -48,8 +48,26 @@ Optional, alle nicht gesetzt: `NOTION_API_BASE_URL` (Proxy), `NEXT_PUBLIC_FATHOM
 - Kein generischer Notion-Look
 - Sauber, editorial, typografisch stark
 - Drei Kategorien sollen klar erkennbar sein
-- [ ] Font-Wahl noch offen
-- [ ] Farbschema noch offen
+- [x] Font: **Familjen Grotesk**, eine Familie für alles (Wortmarke, Überschriften, Fließtext).
+      Hierarchie über Gewicht (600 für Überschriften) und Größe, bewusst *keine* zweite Schrift.
+      Geladen über `next/font/google` in `lib/fonts/site-fonts.ts` – wird beim Build self-hosted,
+      zur Laufzeit kein Request an Google.
+- [x] Farbschema: aus dem persönlichen Design-Konzept, siehe unten.
+
+### Farbsystem
+Single Source of Truth ist `styles/theme.css` (alle 5 Ramps + Neutralpalette als CSS-Variablen).
+Die Werte stammen aus **`D:\analytics_ai\ds_projects\blog\Personal Design Concept 33746312895c80efbcbefd318dee2b30.md`**
+(Notion-Export) – bei Änderungen dort mitziehen. Kern: Purple `#5D2A9D` als Signature-Farbe,
+warme Neutrals (`#FAFAFA` … `#1E1D1B`). Purple liegt auf Links, Zitatstrich, Karten-Oberkante
+und Textauswahl; im Dark Mode auf `#A87EDB` aufgehellt.
+
+Das Konzept gilt projektübergreifend (auch für die ggplot2-Arbeiten), nicht nur für den Blog.
+
+**Kategoriefarben werden in Notion gesetzt, nicht im CSS.** react-notion-x rendert die Tag-Pills
+mit Notions eigener Farbklasse (`notion-item-<farbe>`) und bietet keinen Hook auf den Tag-Text –
+per CSS ist „Musik → Coral" nicht adressierbar. `theme.css` gibt den Pills deshalb nur die
+typografische Behandlung (Versalien, Sperrung, Größe). **Dort niemals `background` oder `color`
+setzen**, das würde die in Notion gewählten Farben überschreiben.
 
 ## Setup-Checkliste
 - [x] Node.js >= 18 installiert
@@ -59,7 +77,7 @@ Optional, alle nicht gesetzt: `NOTION_API_BASE_URL` (Proxy), `NEXT_PUBLIC_FATHOM
 - [x] `site.config.ts` angepasst
 - [x] `pnpm dev` läuft lokal (http://localhost:3000)
 - [x] Vercel deployment eingerichtet (https://blog-one-sage.vercel.app)
-- [ ] Custom Design angepasst
+- [x] Custom Design: Font + Farbsystem stehen (`styles/theme.css`, `lib/fonts/site-fonts.ts`)
 
 ## Aktueller Status
 Live auf Vercel: **https://blog-one-sage.vercel.app** (Projekt `seba25/sebakuhn`, Branch `main`,
@@ -120,6 +138,41 @@ ist ein zufällig generierter Name. Deshalb steht `domain` in `site.config.ts` a
   `lib/config.ts`, `package.json`; per Bundle-Grep verifiziert.
 - **`lib/types.ts:1`:** `import type { ParsedUrlQuery }` statt `import { type ... }` – wegen
   `verbatimModuleSyntax` zog das Edge-Bundle von `/api/social-image` sonst ein Node-Builtin.
+- **Datumsangaben waren durchgängig englisch** („Feb 11, 2026"). `notion-utils`' `formatDate`
+  kodiert `en-US` fest ein. `components/NotionPage.tsx` hatte zwar schon einen
+  `propertyDateValue`-Override, der prüfte aber auf eine Property namens **`Published`** – die es
+  in unserer Datenbank nicht gibt (sie heißt `Publication Date`), also griff er nie. Exakt
+  dieselbe Falle wie beim leeren RSS-Feed. Jetzt formatiert `lib/format-date-de.ts` jedes
+  Datums-Property auf Deutsch, ohne Namensabgleich – damit auch auf den Collection-Karten, die
+  ohne `pageHeader` rendern. Gelesen wird in **UTC**: Notion speichert reine Datumswerte als
+  `YYYY-MM-DD` ohne Zeitzone, lokale Formatierung schöbe sie westlich von UTC einen Tag zurück.
+  Dazu `<Html lang='en'>` → `lang='de'` in `pages/_document.tsx`.
+- **Profilbild auf der Startseite war oben und unten abgeschnitten.** Notion speichert den Block mit
+  `block_aspect_ratio: 1`, `block_preserve_scale: true` und `image_edit_metadata.mask: 'Circle'`.
+  react-notion-x wertet **nichts davon** aus: Es zieht die Box auf die volle Spaltenbreite (434px),
+  behält aber die gespeicherte Höhe (320px), und `object-fit: cover` beschneidet das quadratische
+  Bild (915×915) entsprechend. Die Regel in `styles/theme.css` stellt das Quadrat wieder her und
+  baut die Kreismaske nach.
+
+  **Die Regel hängt an der Block-ID** (`notion-block-17246312895c810eb8f3c53cf40841f2`) – die Maske
+  taucht im Markup nicht auf, es gibt also keinen generischen Selektor. Wird das Bild in Notion
+  gelöscht und neu eingefügt, ändert sich die ID und die Regel läuft ins Leere; sie bricht dann
+  nichts, das Bild ist nur wieder beschnitten. Gleiches gilt für jedes weitere kreisförmig
+  maskierte Bild – das braucht jeweils eine eigene Zeile.
+- **`--notion-font` wurde in `styles/global.css` auf `body` deklariert.** Eine Deklaration auf
+  `body` schlägt eine von `:root` geerbte, also fiel die ganze Seite still auf die System-Schrift
+  zurück, obwohl `theme.css` die Variable korrekt setzte. Im Code unsichtbar, nur im Rendering.
+  Die Deklaration in `global.css` ist entfernt, `font-family: var(--notion-font)` bleibt dort.
+- **Notion-Variablen gehören auf `:root` und `.dark-mode`, nicht auf `.notion`.** Genau dort
+  deklariert react-notion-x sie. Auf `.notion` beschränkte Overrides lassen alles *außerhalb* des
+  Wrappers auf Notions Defaults stehen – Ladebildschirm und 404 blieben auf `#2f3437` statt
+  `#1E1D1B`.
+- **`next/font` lässt sich nicht in `_document` anwenden.** `<Html className={font.variable}>`
+  setzt zwar die Klasse, das zugehörige Stylesheet wird aber nicht eingebunden: `--font-sans` war
+  in Produktion leer (im Dev-Server fiel es nicht auf). Die Font wird deshalb in `pages/_app.tsx`
+  importiert – das erzeugt die `@font-face`-Regeln – und die Variable dort über ein schlichtes
+  `<style>` in `next/head` auf `:root` gesetzt. **Kein `<style jsx global>`**: Turbopack kann
+  `styled-jsx/style.js` nicht auflösen und warnt bei jedem Build.
 
 ### Bundler: Dev läuft auf Webpack
 `package.json` nutzt `next dev --webpack`. Next 16 nutzt sonst Turbopack, und dessen **Dev-Overlay** meldet
@@ -132,7 +185,9 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
 - [ ] Notion Buttons → verlinkten Text ersetzen (react-notion-x rendert Button-Blöcke nicht korrekt;
       auf der Live-Seite als graue Kästchen mit Aufschrift "Button" sichtbar)
 - [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
-- [ ] Design anpassen (Font, Farben)
+- [ ] Kategoriefarben in Notion setzen (bewusst dort, nicht im CSS – s. Farbsystem)
+- [ ] Lange Artikeltitel stehen zentriert über bis zu vier Zeilen (`.notion-title` in
+      `styles/notion.css` hat `text-align: center`). Linksbündig wäre ruhiger – noch nicht entschieden.
 - [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
       (`components/PageSocial.tsx` hat keinen Mastodon-Eintrag, es fehlt auch ein Icon in `lib/icons/`)
 - [ ] Restliche Advisories sind **nicht selbst behebbar** – alle stecken in Abhängigkeiten fremder
@@ -144,8 +199,9 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
       wird still verworfen
 
 ## Nächster Schritt
-**Design** (Font, Farben, die drei Kategorien sichtbar machen). Das Deployment steht und aktualisiert
-sich bei jedem Push auf `main` von selbst.
+Design steht (Font + Farbsystem). Offen sind die Kategoriefarben in Notion und die Frage, ob lange
+Titel zentriert bleiben. Danach der **Umzug auf sebakuhn.de**. Das Deployment aktualisiert sich bei
+jedem Push auf `main` von selbst.
 
 ### Danach: Umzug auf sebakuhn.de
 Die Domain liegt bei **IONOS** und leitet aktuell auf die alte `sebakuhn.notion.site` weiter. Bewusst
