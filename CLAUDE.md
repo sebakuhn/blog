@@ -187,18 +187,24 @@ Diagnostik-Artefakt, kein echter Bug. Achtung: `next build` nutzt weiterhin Turb
 und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-Overlay.
 
 ### Offene Punkte
+
+**In Notion zu erledigen** (Sebastian, Stand 03.08.2026 zugesagt):
+- [ ] Kategoriefarben der Tags setzen (bewusst dort, nicht im CSS – s. Farbsystem)
+- [ ] Impressum auf der Kontakt-Seite: Normverweise aktualisieren – **§ 5 TMG** → seit 14.05.2024
+      **§ 5 DDG**, **§ 55 Abs. 2 RStV** → seit 2020 **§ 18 Abs. 2 MStV**. Der „Hinweis zur
+      Datenverarbeitung" ist ein Einzeiler und keine Datenschutzerklärung nach Art. 13 DSGVO.
+      (Sachhinweis, keine Rechtsberatung.)
+- [ ] Copyright-Zeilen in den Notion-Seiten sind fest eingetippt und driften: Startseite „2026",
+      Kontakt-Seite „2025". Die Fußzeile des Frontends rechnet dagegen mit `new Date()`.
+
+**Im Code:**
 - [ ] Notion Buttons → verlinkten Text ersetzen (react-notion-x rendert Button-Blöcke nicht korrekt;
       auf der Live-Seite als graue Kästchen mit Aufschrift "Button" sichtbar)
 - [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
-- [ ] Kategoriefarben in Notion setzen (bewusst dort, nicht im CSS – s. Farbsystem)
-- [ ] **Impressum steht auf der Kontakt-Seite**, nicht auf einer eigenen Seite – im Menü heißt der
-      Punkt deshalb nur „Kontakt". Ggf. auf „Kontakt & Impressum" umbenennen, damit es auffindbar
-      ist. Die zitierten Normen sind veraltet: **§ 5 TMG** → seit 14.05.2024 **§ 5 DDG**,
-      **§ 55 Abs. 2 RStV** → seit 2020 **§ 18 Abs. 2 MStV**. Der „Hinweis zur Datenverarbeitung"
-      ist ein Einzeiler und keine Datenschutzerklärung nach Art. 13 DSGVO.
-      (Sachhinweis, keine Rechtsberatung.)
-- [ ] Die Copyright-Zeilen in den Notion-Seiten sind fest verdrahtet und driften: Startseite „2026",
-      Kontakt-Seite „2025". Die Fußzeile des Frontends rechnet dagegen mit `new Date()`.
+- [ ] Menüpunkt heißt „Kontakt", das Impressum steht aber auf dieser Seite. Ein Impressum muss leicht
+      erkennbar sein, „Kontakt" allein wird überwiegend nicht als ausreichende Bezeichnung
+      angesehen. Umbenennen auf „Kontakt & Impressum" wäre eine Zeile in `site.config.ts` –
+      **nicht in Notion**, s. Kasten unten.
 - [ ] Lange Artikeltitel stehen zentriert über bis zu vier Zeilen (`.notion-title` in
       `styles/notion.css` hat `text-align: center`). Linksbündig wäre ruhiger – noch nicht entschieden.
 - [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
@@ -210,10 +216,28 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
 - [ ] `kyOptions` in `lib/get-site-map.ts:36` heißt in notion-client 7.10 `ofetchOptions` → Timeout
       wird still verworfen
 
+### Navigation: Titel stehen im Code, nicht in Notion
+`navigationLinks` in `site.config.ts` enthält **fest eingetragene Titel und Page-IDs**. Der Titel
+folgt der Notion-Seite *nicht*: Wird die Seite in Notion umbenannt, steht im Menü weiterhin der alte
+Text. Wird sie gelöscht und neu angelegt, ändert sich ihre ID und der Link läuft ins Leere. Beides
+muss hier von Hand nachgezogen werden.
+
+Aktuell verlinkt:
+
+| Menü        | Page-ID                            | Pfad          |
+| ----------- | ---------------------------------- | ------------- |
+| Blog        | `17246312895c81298d9dc48ee00cf5f2` | `/blog`       |
+| Über mich   | `17246312895c81e38fddc89fd9ab11aa` | `/ueber-mich` |
+| Kontakt     | `17246312895c81dcbe88ee2269e0cd0b` | `/kontakt`    |
+
+Bewusst nicht verlinkt: `/blog-posts` – sieht nach einer internen Datenbank-Ansicht aus.
+Page-IDs findet man über `pageProps.pageId` im `__NEXT_DATA__` der jeweiligen Seite.
+
 ## Nächster Schritt
-Design steht (Font + Farbsystem). Offen sind die Kategoriefarben in Notion und die Frage, ob lange
-Titel zentriert bleiben. Danach der **Umzug auf sebakuhn.de**. Das Deployment aktualisiert sich bei
-jedem Push auf `main` von selbst.
+Design steht (Font + Farbsystem), Navigation und Fußzeile sind eingerichtet. Als Nächstes die
+Notion-Aufgaben oben (Kategoriefarben, Impressum), dann die offene Frage zu den zentrierten Titeln,
+danach der **Umzug auf sebakuhn.de**. Das Deployment aktualisiert sich bei jedem Push auf `main`
+von selbst.
 
 ### Danach: Umzug auf sebakuhn.de
 Die Domain liegt bei **IONOS** und leitet aktuell auf die alte `sebakuhn.notion.site` weiter. Bewusst
