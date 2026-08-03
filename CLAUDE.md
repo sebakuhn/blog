@@ -25,7 +25,7 @@ name: 'Sebastian Kuhn'
 domain: 'blog-one-sage.vercel.app'   // beim Umzug auf 'sebakuhn.de' -> danach neu builden
 author: 'Sebastian Kuhn'
 description: 'Blog über Musik & Kultur, Politik & Gesellschaft, Daten & KI'
-navigationStyle: 'default'           // später ggf. auf 'custom' umstellen
+navigationStyle: 'custom'            // + navigationLinks: Blog / Über mich / Kontakt
 ```
 **Ungenutzte Social-Felder bleiben auskommentiert, nicht `null`.** `twitter: null` bricht den Build
 ab (`TS2322`) – Details unter "Behobene Fixes".
@@ -159,6 +159,11 @@ ist ein zufällig generierter Name. Deshalb steht `domain` in `site.config.ts` a
   gelöscht und neu eingefügt, ändert sich die ID und die Regel läuft ins Leere; sie bricht dann
   nichts, das Bild ist nur wieder beschnitten. Gleiches gilt für jedes weitere kreisförmig
   maskierte Bild – das braucht jeweils eine eigene Zeile.
+- **Wortmarken-Selektor traf auch den ersten Navigationslink.** `.notion-header
+  .breadcrumb:first-child` matcht jedes `.breadcrumb`, das erstes Kind seines Elternelements ist –
+  und `.notion-nav-header-rhs` trägt die Klasse `breadcrumbs` ebenfalls. „Blog" bekam dadurch
+  Größe und Gewicht der Wortmarke. Jetzt über
+  `.breadcrumbs:not(.notion-nav-header-rhs) > .breadcrumb` eingegrenzt.
 - **`--notion-font` wurde in `styles/global.css` auf `body` deklariert.** Eine Deklaration auf
   `body` schlägt eine von `:root` geerbte, also fiel die ganze Seite still auf die System-Schrift
   zurück, obwohl `theme.css` die Variable korrekt setzte. Im Code unsichtbar, nur im Rendering.
@@ -186,6 +191,9 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
       auf der Live-Seite als graue Kästchen mit Aufschrift "Button" sichtbar)
 - [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
 - [ ] Kategoriefarben in Notion setzen (bewusst dort, nicht im CSS – s. Farbsystem)
+- [ ] **Impressum und Datenschutzerklärung fehlen.** Es gibt in Notion keine solche Seite, deshalb
+      steht sie auch nicht in `navigationLinks`. Sobald sie existiert: Page-ID holen und in
+      `site.config.ts` ergänzen.
 - [ ] Lange Artikeltitel stehen zentriert über bis zu vier Zeilen (`.notion-title` in
       `styles/notion.css` hat `text-align: center`). Linksbündig wäre ruhiger – noch nicht entschieden.
 - [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
