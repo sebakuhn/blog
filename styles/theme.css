@@ -196,16 +196,34 @@ body {
   box-shadow: none;
 }
 
-/* Wordmark: the root breadcrumb in the header. */
-.notion-header .breadcrumb.active,
-.notion-header .breadcrumb:first-child {
+/* Wordmark: the root breadcrumb on the left of the header.
+ *
+ * Scoped to the left container on purpose. `.breadcrumb:first-child` alone also
+ * matches the first navigation link, because .notion-nav-header-rhs carries the
+ * .breadcrumbs class too — that gave "Blog" the wordmark's size and weight. */
+.notion-header .breadcrumbs:not(.notion-nav-header-rhs) > .breadcrumb {
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-.notion-header .breadcrumb:first-child .notion-page-icon {
+.notion-header .breadcrumbs:not(.notion-nav-header-rhs) .notion-page-icon {
   display: none;
+}
+
+/* Navigation links. Only the anchors — the theme toggle and the search button
+   sit in the same container and are icon-only divs. */
+.notion-header .notion-nav-header-rhs a.breadcrumb {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg-color-6);
+  transition: color 120ms linear;
+}
+
+.notion-header .notion-nav-header-rhs a.breadcrumb:hover {
+  color: var(--t-accent);
+  background: transparent;
 }
 
 .notion-quote {
