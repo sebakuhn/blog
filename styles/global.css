@@ -14,9 +14,9 @@ html {
 }
 
 body {
-  --notion-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-    'Droid Sans', 'Helvetica Neue', 'Noto Sans', sans-serif;
+  /* --notion-font is set in styles/theme.css. Declaring it here too would win
+     over that :root rule for everything inside body, because a declaration on
+     body beats an inherited one. */
   font-family: var(--notion-font);
   overflow-x: hidden;
 }
