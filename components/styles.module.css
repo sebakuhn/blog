@@ -97,6 +97,10 @@
   color: #2795e9;
 }
 
+.bluesky:hover {
+  color: #0085ff;
+}
+
 .mastodon:hover {
   color: #5a4be1;
 }
