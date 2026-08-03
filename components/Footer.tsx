@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import * as config from '@/lib/config'
+import { BlueskyIcon } from '@/lib/icons/bluesky'
 import { GitHubIcon } from '@/lib/icons/github'
 import { LinkedInIcon } from '@/lib/icons/linkedin'
 import { MoonIcon } from '@/lib/icons/moon'
@@ -57,6 +58,18 @@ export function FooterImpl() {
             rel='noopener noreferrer'
           >
             <TwitterIcon />
+          </a>
+        )}
+
+        {config.bluesky && (
+          <a
+            className={styles.bluesky}
+            href={`https://bsky.app/profile/${config.bluesky}`}
+            title={`Bluesky @${config.bluesky}`}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            <BlueskyIcon />
           </a>
         )}
 
