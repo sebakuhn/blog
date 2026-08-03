@@ -191,9 +191,14 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
       auf der Live-Seite als graue Kästchen mit Aufschrift "Button" sichtbar)
 - [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
 - [ ] Kategoriefarben in Notion setzen (bewusst dort, nicht im CSS – s. Farbsystem)
-- [ ] **Impressum und Datenschutzerklärung fehlen.** Es gibt in Notion keine solche Seite, deshalb
-      steht sie auch nicht in `navigationLinks`. Sobald sie existiert: Page-ID holen und in
-      `site.config.ts` ergänzen.
+- [ ] **Impressum steht auf der Kontakt-Seite**, nicht auf einer eigenen Seite – im Menü heißt der
+      Punkt deshalb nur „Kontakt". Ggf. auf „Kontakt & Impressum" umbenennen, damit es auffindbar
+      ist. Die zitierten Normen sind veraltet: **§ 5 TMG** → seit 14.05.2024 **§ 5 DDG**,
+      **§ 55 Abs. 2 RStV** → seit 2020 **§ 18 Abs. 2 MStV**. Der „Hinweis zur Datenverarbeitung"
+      ist ein Einzeiler und keine Datenschutzerklärung nach Art. 13 DSGVO.
+      (Sachhinweis, keine Rechtsberatung.)
+- [ ] Die Copyright-Zeilen in den Notion-Seiten sind fest verdrahtet und driften: Startseite „2026",
+      Kontakt-Seite „2025". Die Fußzeile des Frontends rechnet dagegen mit `new Date()`.
 - [ ] Lange Artikeltitel stehen zentriert über bis zu vier Zeilen (`.notion-title` in
       `styles/notion.css` hat `text-align: center`). Linksbündig wäre ruhiger – noch nicht entschieden.
 - [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
