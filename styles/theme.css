@@ -1,0 +1,295 @@
+/**
+ * Personal design system.
+ *
+ * Single source of truth for colour and typography. Values come from the
+ * "Personal Design Concept" doc — keep them in sync when that doc changes.
+ * Imported last in _app.tsx so it wins over react-notion-x and notion.css.
+ */
+
+:root {
+  /* --- Primary (Purple) — signature colour --------------------------- */
+  --c-primary-50: #f3edfc;
+  --c-primary-200: #d4c2f0;
+  --c-primary-400: #a87edb;
+  --c-primary-600: #5d2a9d;
+  --c-primary-800: #461f77;
+  --c-primary-900: #2e1450;
+
+  /* --- Secondary (Teal) ---------------------------------------------- */
+  --c-secondary-50: #e6faf6;
+  --c-secondary-200: #99e8d8;
+  --c-secondary-400: #33cfaf;
+  --c-secondary-600: #00b39b;
+  --c-secondary-800: #008573;
+  --c-secondary-900: #005c4e;
+
+  /* --- Accent 1 (Coral) ----------------------------------------------- */
+  --c-coral-50: #fde8ed;
+  --c-coral-200: #f9b3c3;
+  --c-coral-400: #f06b88;
+  --c-coral-600: #e02d52;
+  --c-coral-800: #a6203c;
+  --c-coral-900: #7a1830;
+
+  /* --- Accent 2 (Gold) ------------------------------------------------ */
+  --c-gold-50: #fdf6e0;
+  --c-gold-200: #f7e299;
+  --c-gold-400: #efcc4d;
+  --c-gold-600: #d4a912;
+  --c-gold-800: #9a7b0d;
+  --c-gold-900: #6b5200;
+
+  /* --- Accent 3 (Blue) ------------------------------------------------ */
+  --c-blue-50: #e8f4fc;
+  --c-blue-200: #a8d4f2;
+  --c-blue-400: #58ade3;
+  --c-blue-600: #1a85c9;
+  --c-blue-800: #126396;
+  --c-blue-900: #0c4a72;
+
+  /* --- Neutrals (warm grey ramp) -------------------------------------- */
+  --c-neutral-50: #fafafa;
+  --c-neutral-100: #f2f0ed;
+  --c-neutral-300: #e0ddd7;
+  --c-neutral-400: #b8b5ae;
+  --c-neutral-500: #8a8780;
+  --c-neutral-600: #5a5852;
+  --c-neutral-700: #3a3936;
+  --c-neutral-900: #1e1d1b;
+
+  /* --- Category accents ------------------------------------------------
+     Purple stays with Daten & KI — it is the signature colour and the doc
+     ties it to the analytical work. */
+  --c-cat-musik: var(--c-coral-600);
+  --c-cat-politik: var(--c-blue-600);
+  --c-cat-daten: var(--c-primary-600);
+
+  /* --- Semantic roles, light mode -------------------------------------- */
+  --t-accent: var(--c-primary-600);
+  --t-accent-hover: var(--c-primary-800);
+  --t-rule: var(--c-neutral-300);
+  --t-muted: var(--c-neutral-500);
+
+  /* --- Notion variable overrides, light --------------------------------
+     These must sit on :root / .dark-mode, exactly where react-notion-x
+     declares them. Scoping them to .notion would leave everything outside
+     that wrapper — loading screen, 404, error page — on Notion's defaults. */
+  --notion-font: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', 'Helvetica Neue', sans-serif;
+
+  --fg-color: var(--c-neutral-900);
+  --fg-color-0: rgb(30 29 27 / 9%);
+  --fg-color-1: rgb(30 29 27 / 16%);
+  --fg-color-2: var(--c-neutral-400);
+  --fg-color-3: var(--c-neutral-500);
+  --fg-color-4: var(--c-neutral-900);
+  --fg-color-5: rgb(30 29 27 / 4%);
+  --fg-color-6: var(--c-neutral-700);
+  --fg-color-7: var(--c-neutral-600);
+  --fg-color-icon: var(--c-neutral-700);
+
+  --bg-color: var(--c-neutral-50);
+  --bg-color-0: var(--c-neutral-300);
+  --bg-color-1: var(--c-neutral-100);
+  --bg-color-2: var(--c-neutral-300);
+
+  --select-color-0: var(--t-accent);
+  --select-color-1: var(--c-primary-200);
+  --select-color-2: var(--c-primary-50);
+}
+
+.dark-mode {
+  /* Fills go dark, strokes and accents lighten so they stay legible. */
+  --t-accent: var(--c-primary-400);
+  --t-accent-hover: var(--c-primary-200);
+  --t-rule: #34322e;
+  --t-muted: var(--c-neutral-400);
+
+  --c-cat-musik: var(--c-coral-400);
+  --c-cat-politik: var(--c-blue-400);
+  --c-cat-daten: var(--c-primary-400);
+
+  --fg-color: var(--c-neutral-100);
+  --fg-color-0: rgb(242 240 237 / 12%);
+  --fg-color-1: rgb(242 240 237 / 20%);
+  --fg-color-2: var(--c-neutral-500);
+  --fg-color-3: var(--c-neutral-400);
+  --fg-color-4: var(--c-neutral-50);
+  --fg-color-5: rgb(242 240 237 / 7%);
+  --fg-color-6: var(--c-neutral-50);
+  --fg-color-7: var(--c-neutral-400);
+  --fg-color-icon: var(--c-neutral-100);
+
+  --bg-color: var(--c-neutral-900);
+  --bg-color-0: #34322e;
+  --bg-color-1: #262523;
+  --bg-color-2: #34322e;
+
+  --select-color-0: var(--t-accent);
+  --select-color-1: rgb(168 126 219 / 30%);
+  --select-color-2: var(--c-primary-900);
+}
+
+/* The page background lives on body, outside .notion. */
+body {
+  background: var(--bg-color);
+  color: var(--fg-color);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Typography
+ * ---------------------------------------------------------------------- */
+
+/* One family throughout — the hierarchy comes from weight and size, not from a
+   second typeface. Familjen Grotesk needs negative tracking at display sizes,
+   otherwise the headings look loose. */
+.notion-title,
+.notion-h1,
+.notion-h2,
+.notion-h3,
+.notion-gallery-grid .notion-page-title-text,
+.notion-collection-card .notion-page-title-text {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.notion-title {
+  font-size: clamp(2.2rem, 5.5vw, 3.4rem);
+  line-height: 1.12;
+  margin-bottom: 0.3em;
+}
+
+.notion-h1 {
+  font-size: 2.1rem;
+}
+
+.notion-h2 {
+  font-size: 1.75rem;
+}
+
+.notion-h3 {
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+
+.notion-gallery-grid .notion-page-title-text {
+  font-size: 1.6rem;
+  letter-spacing: -0.015em;
+}
+
+/* Body copy — a little more air than Notion's default. */
+.notion-page {
+  line-height: 1.7;
+}
+
+.notion-text {
+  font-size: 1.02rem;
+}
+
+/* ---------------------------------------------------------------------- *
+ * Chrome
+ * ---------------------------------------------------------------------- */
+
+.notion-header {
+  border-bottom: 1px solid var(--t-rule);
+  box-shadow: none;
+}
+
+/* Wordmark: the root breadcrumb in the header. */
+.notion-header .breadcrumb.active,
+.notion-header .breadcrumb:first-child {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.notion-header .breadcrumb:first-child .notion-page-icon {
+  display: none;
+}
+
+.notion-quote {
+  border-left: 3px solid var(--t-accent);
+  font-style: normal;
+  color: var(--fg-color-6);
+}
+
+/* Profilbild auf der Startseite.
+ *
+ * Notion speichert für diesen Block `block_aspect_ratio: 1`,
+ * `block_preserve_scale: true` und `image_edit_metadata.mask: 'Circle'`.
+ * react-notion-x wertet nichts davon aus: Es zieht die Box auf die volle
+ * Spaltenbreite, behält aber die gespeicherte Höhe von 320px — bei einem
+ * quadratischen Bild schneidet `object-fit: cover` dann oben und unten ab.
+ * Hier wird die Box wieder quadratisch gemacht und die Maske nachgebaut.
+ *
+ * Die Maske taucht im Markup nicht auf, es gibt also keinen generischen
+ * Selektor dafür — die Regel hängt an der Block-ID. Wird das Bild in Notion
+ * gelöscht und neu eingefügt, ändert sich die ID und diese Regel läuft ins
+ * Leere (sie bricht dann nichts, das Bild ist nur wieder beschnitten).
+ */
+.notion-block-17246312895c810eb8f3c53cf40841f2 {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.notion-block-17246312895c810eb8f3c53cf40841f2 > div {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.notion-hr {
+  border-top: 1px solid var(--t-rule);
+}
+
+/* Links pick up the signature purple instead of Notion's blue. */
+.notion-page a.notion-link {
+  color: var(--t-accent);
+  border-bottom: 1px solid var(--c-primary-200);
+  text-decoration: none;
+  transition: color 120ms linear, border-color 120ms linear;
+}
+
+.notion-page a.notion-link:hover {
+  color: var(--t-accent-hover);
+  border-bottom-color: var(--t-accent);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Category tags
+ *
+ * The fill comes from Notion's own tag colour — react-notion-x puts it on a
+ * `notion-item-<colour>` class. The category colours are therefore set in
+ * Notion, not here. Only the typographic treatment belongs in this file:
+ * do NOT add a background or a text colour, that would override the choice
+ * made in Notion.
+ * ---------------------------------------------------------------------- */
+
+.notion-property-multi_select-item {
+  height: auto;
+  border-radius: 2px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Collection cards get a rule in the category colour above the title. */
+.notion-collection-card {
+  border-radius: 4px;
+  border-top: 3px solid var(--t-accent);
+  background: transparent;
+}
+
+.notion-collection-card-cover,
+.notion-collection-card-cover img {
+  border-radius: 2px;
+}
+
+.notion-collection-card-cover {
+  box-shadow: none;
+  border: 1px solid var(--t-rule);
+}
