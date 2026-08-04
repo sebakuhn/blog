@@ -178,6 +178,64 @@ ist ein zufällig generierter Name. Deshalb steht `domain` in `site.config.ts` a
   importiert – das erzeugt die `@font-face`-Regeln – und die Variable dort über ein schlichtes
   `<style>` in `next/head` auf `:root` gesetzt. **Kein `<style jsx global>`**: Turbopack kann
   `styled-jsx/style.js` nicht auflösen und warnt bei jedem Build.
+- **Notion blockt Requests ohne Browser-User-Agent (403).** Der Build brach beim allerersten
+  `getPage` ab – Notions Cloudflare antwortete mit einer **HTML**-Fehlerseite, nicht mit einem
+  JSON-API-Fehler. notion-client schickt keinen User-Agent. Von Hand gegengeprüft: derselbe POST auf
+  `/api/v3/loadPageChunk` liefert ohne den Header 403 und mit ihm 200 – bei unverändert öffentlich
+  geteilter Seite. Die Freigabe war also nie das Problem, und der Fehler hätte auch jeden
+  Vercel-Build getroffen. Der Header sitzt in `lib/notion-api.ts` am **Konstruktor**, nicht am
+  einzelnen Aufruf: `fetch()` in notion-client merged
+  `{...this._ofetchOptions?.headers, ...ofetchOptions?.headers}`, damit überlebt er das per-Call
+  `ofetchOptions` aus `lib/get-site-map.ts` und gilt auch für `getCollectionData` /
+  `getSignedFileUrls` / `search`.
+- **429 beim Prerendering.** `next build` rendert alle Seiten parallel vor (hier 12 Worker) und lief
+  damit in Notions Rate Limit; der Export brach ab. ofetch führt `429` zwar in seinen
+  `retryStatusCodes`, setzt `retry` bei POST aber auf 0, weil die Methode nicht idempotent ist –
+  diese Lesezugriffe sind gefahrlos wiederholbar. Jetzt `retry: 5` mit linearem Backoff 1s→5s.
+  ofetch rekursiert mit `retry: retries - 1`, `retryDelay` sieht also den aktuellen Reststand.
+- **`kyOptions` war ein toter Name.** notion-client ist mit 7.10 von `ky` auf `ofetch` umgestiegen und
+  hat die Option in `ofetchOptions` umbenannt. Unter dem alten Namen fiel das 30-Sekunden-Timeout in
+  `lib/get-site-map.ts` still unter den Tisch – kein Fehler, nur wirkungslos. `FetchOptions` von
+  ofetch 1.5.1 kennt `timeout?: number`, der Wert greift jetzt.
+- **Mastodon wurde nirgends gerendert.** `mastodon` stand in `site.config.ts`, wurde in
+  `lib/config.ts` gelesen, und endete im Nichts: weder `components/PageSocial.tsx` noch
+  `components/Footer.tsx` hatten einen Eintrag, `lib/icons/` kein Icon. Sogar der Helper
+  `getMastodonHandle()` war exportiert, aber von keiner Stelle aufgerufen. Übrig war nur eine
+  verwaiste `.mastodon:hover`-Regel in `components/styles.module.css`. Jetzt in beiden Komponenten
+  ergänzt, Icon in `lib/icons/mastodon.tsx`.
+
+  **Der href kommt direkt aus `config.mastodon`**, nicht aus einem zusammengebauten Handle: Mastodon
+  ist föderiert, die Instanz steckt in der URL. `getMastodonHandle()` liefert die kanonische Form
+  `@name@instanz` und wird nur fürs `title`-Attribut benutzt. Der Footer-Link trägt zusätzlich
+  `rel='me'` – damit lässt sich das Profil in Mastodon als verifiziert markieren.
+
+### Kategorien sind im Frontend nicht klickbar
+Auf `sebakuhn.notion.site` öffnet ein Klick auf eine Kategorie-Pill eine gefilterte Ansicht. Das ist
+Funktionalität der Notion-App und steckt nicht in den Daten, die die API liefert: react-notion-x
+rendert Multi-Select-Werte als stumpfes `<div class="notion-property-multi_select-item
+notion-item-<farbe>">`, ohne `<a>`, ohne `onClick`.
+
+Geplanter Weg (Stand 04.08.2026), bewusst **ohne** eigenen Datenlayer:
+1. [x] In Notion je eine Seite pro Kategorie als direktes Kind der Root Page, Inhalt jeweils eine
+   *verlinkte Ansicht* der bestehenden Blog-Datenbank, gefiltert auf `Tags`. Am einfachsten die
+   Seite „Blog" duplizieren und nur den Filter ergänzen – dabei darf die Datenbank **nicht**
+   mitkopiert werden, sonst werden Beiträge doppelt gepflegt.
+   Erledigt, die Seiten bauen durch: `/musik-kultur`, `/politik-gesellschaft`, `/daten-statistik-ki`.
+2. Im Code nur ein `propertySelectValue`-Override in `components/NotionPage.tsx` (gleiches Muster
+   wie `propertyDateValue`/`propertyTextValue`, registriert in `notionRendererComponents`), der die
+   Pill in einen Link auf die jeweilige Kategorieseite hüllt. Bei drei Kategorien ist die Zuordnung
+   Tag → Page-ID eine Konstante, keine Slug-Mechanik.
+
+Dabei beachten: Das `notion-item-<farbe>` muss am inneren `div` bleiben, sonst sind die in Notion
+gesetzten Kategoriefarben weg. Und der Override greift für *jedes* Select-Property, also auf
+`schema.name === 'Tags'` prüfen.
+
+`/blog` bleibt als ungefilterte Gesamtübersicht bestehen, die Kategorieseiten kommen **nicht** ins
+Menü – sie sind das Ziel der Pills.
+
+Die Alternative wäre eine eigene Route `pages/tag/[tag].tsx` gewesen. Der Datenteil wäre überschaubar
+(`pages/feed.tsx:41-73` macht die Schleife bereits), aber die Darstellung müsste die Gallery-Karten
+samt `preview_images` von Hand nachbauen. Deshalb verworfen.
 
 ### Bundler: Dev läuft auf Webpack
 `package.json` nutzt `next dev --webpack`. Next 16 nutzt sonst Turbopack, und dessen **Dev-Overlay** meldet
@@ -201,20 +259,13 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
 - [ ] Notion Buttons → verlinkten Text ersetzen (react-notion-x rendert Button-Blöcke nicht korrekt;
       auf der Live-Seite als graue Kästchen mit Aufschrift "Button" sichtbar)
 - [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
-- [ ] Menüpunkt heißt „Kontakt", das Impressum steht aber auf dieser Seite. Ein Impressum muss leicht
-      erkennbar sein, „Kontakt" allein wird überwiegend nicht als ausreichende Bezeichnung
-      angesehen. Umbenennen auf „Kontakt & Impressum" wäre eine Zeile in `site.config.ts` –
-      **nicht in Notion**, s. Kasten unten.
 - [ ] Lange Artikeltitel stehen zentriert über bis zu vier Zeilen (`.notion-title` in
       `styles/notion.css` hat `text-align: center`). Linksbündig wäre ruhiger – noch nicht entschieden.
-- [ ] `mastodon` in `site.config.ts` ist ein **toter Wert** – wird nirgends gerendert
-      (`components/PageSocial.tsx` hat keinen Mastodon-Eintrag, es fehlt auch ein Icon in `lib/icons/`)
+- [ ] Kategorie-Pills klickbar machen – s. Kasten „Kategorien sind im Frontend nicht klickbar"
 - [ ] Restliche Advisories sind **nicht selbst behebbar** – alle stecken in Abhängigkeiten fremder
       Pakete: `postcss` (3×, in `next` selbst), `js-cookie` (via `react-use`), `sharp` (via
       `lqip-modern`, nur Build-Zeit für Preview-Bilder), `@babel/core` (low, via `styled-jsx`).
       Nur mit Upstream-Updates lösbar, gelegentlich `pnpm audit --prod` gegenprüfen.
-- [ ] `kyOptions` in `lib/get-site-map.ts:36` heißt in notion-client 7.10 `ofetchOptions` → Timeout
-      wird still verworfen
 
 ### Navigation: Titel stehen im Code, nicht in Notion
 `navigationLinks` in `site.config.ts` enthält **fest eingetragene Titel und Page-IDs**. Der Titel
@@ -224,11 +275,16 @@ muss hier von Hand nachgezogen werden.
 
 Aktuell verlinkt:
 
-| Menü        | Page-ID                            | Pfad          |
-| ----------- | ---------------------------------- | ------------- |
-| Blog        | `17246312895c81298d9dc48ee00cf5f2` | `/blog`       |
-| Über mich   | `17246312895c81e38fddc89fd9ab11aa` | `/ueber-mich` |
-| Kontakt     | `17246312895c81dcbe88ee2269e0cd0b` | `/kontakt`    |
+| Menü                | Page-ID                            | Pfad                  |
+| ------------------- | ---------------------------------- | --------------------- |
+| Blog                | `17246312895c81298d9dc48ee00cf5f2` | `/blog`               |
+| Über mich           | `17246312895c81e38fddc89fd9ab11aa` | `/ueber-mich`         |
+| Kontakt & Impressum | `17246312895c81dcbe88ee2269e0cd0b` | `/kontakt-impressum`  |
+
+Der **Pfad** folgt dagegen sehr wohl dem Notion-Titel – er wird von `getCanonicalPageId` aus ihm
+gebaut. Beim Umbenennen von „Kontakt" auf „Kontakt & Impressum" ist `/kontakt` deshalb weggefallen.
+Wer eine URL festnageln will, setzt in Notion eine `Slug`-Property; die hat Vorrang
+(`lib/get-canonical-page-id.ts:75`).
 
 Bewusst nicht verlinkt: `/blog-posts` – sieht nach einer internen Datenbank-Ansicht aus.
 Page-IDs findet man über `pageProps.pageId` im `__NEXT_DATA__` der jeweiligen Seite.
