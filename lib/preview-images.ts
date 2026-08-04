@@ -12,6 +12,7 @@ import pMemoize from 'p-memoize'
 import { defaultPageCover, defaultPageIcon } from './config'
 import { db } from './db'
 import { mapImageUrl } from './map-image-url'
+import { USER_AGENT } from './user-agent'
 
 export async function getPreviewImageMap(
   recordMap: ExtendedRecordMap
@@ -53,7 +54,12 @@ async function createPreviewImage(
       console.warn(`redis error get "${cacheKey}"`, err.message)
     }
 
-    const body = await ky(url).arrayBuffer()
+    // same 403 as the api client without this — the build logged "failed to
+    // create preview image" for every notion-hosted image and the cards lost
+    // their blurred placeholders
+    const body = await ky(url, {
+      headers: { 'User-Agent': USER_AGENT }
+    }).arrayBuffer()
     const result = await lqip(body)
     console.log('lqip', { ...result.metadata, url, cacheKey })
 
