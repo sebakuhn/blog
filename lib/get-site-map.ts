@@ -33,7 +33,9 @@ const getAllPages = pMemoize(getAllPagesImpl, {
 const getPage = async (pageId: string, opts?: any) => {
   console.log('\nnotion getPage', uuidToId(pageId))
   return notion.getPage(pageId, {
-    kyOptions: {
+    // notion-client 7.10 renamed this from `kyOptions` when it switched to
+    // ofetch — under the old name the timeout was silently dropped
+    ofetchOptions: {
       timeout: 30_000
     },
     ...opts
