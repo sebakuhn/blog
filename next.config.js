@@ -3,6 +3,15 @@
 
 export default {
   staticPageGenerationTimeout: 300,
+
+  experimental: {
+    // this build is bound by notion's rate limit, not by cpu: every prerendered
+    // page is one or more api calls. the default worker count (one per core, 12
+    // here) hammers notion hard enough to earn a 429 and abort the export.
+    // see the retry/backoff in `lib/notion-api.ts` — both are needed.
+    cpus: 3
+  },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'www.notion.so' },
