@@ -173,8 +173,10 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Cards are ~320px wide in the two-column grid, so 1.6rem ran long titles to
+   five lines. */
 .notion-gallery-grid .notion-page-title-text {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   letter-spacing: -0.015em;
 }
 

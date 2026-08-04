@@ -53,18 +53,25 @@
   gap: 0.5rem;
 }
 
+/* The starter kit ships minmax(360px) with a 6vmin gap. That needs 788px for
+   two columns, which only the root page has (`.index-page` widens it to 900px);
+   every other page is capped at 720px above and fell back to a single
+   full-width card. 300px + a fixed 2rem gap gives two columns at 720px
+   (632px) and stays at two on the wider root page (three would need 964px),
+   so the gallery looks the same everywhere instead of depending on which page
+   it sits on. A fixed gap also keeps it from drifting with the viewport. */
 .notion-gallery-grid {
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  grid-gap: 6vmin;
-  gap: 6vmin;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-gap: 2rem;
+  gap: 2rem;
 }
 
 .notion-gallery-grid .notion-page-icon-inline {
   display: none;
 }
 
+/* size lives in theme.css, which is imported after this file and wins */
 .notion-gallery-grid .notion-page-title-text {
-  font-size: 2em;
   white-space: unset;
 }
 
