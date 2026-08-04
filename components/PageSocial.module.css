@@ -93,6 +93,13 @@
   border-color: #0085ff;
 }
 
+.mastodon .actionBgPane {
+  background: #5a4be1;
+}
+.mastodon:hover {
+  border-color: #5a4be1;
+}
+
 .linkedin .actionBgPane {
   background: #0077b5;
 }
