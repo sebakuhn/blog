@@ -188,11 +188,31 @@ ist ein zufällig generierter Name. Deshalb steht `domain` in `site.config.ts` a
   `{...this._ofetchOptions?.headers, ...ofetchOptions?.headers}`, damit überlebt er das per-Call
   `ofetchOptions` aus `lib/get-site-map.ts` und gilt auch für `getCollectionData` /
   `getSignedFileUrls` / `search`.
-- **429 beim Prerendering.** `next build` rendert alle Seiten parallel vor (hier 12 Worker) und lief
-  damit in Notions Rate Limit; der Export brach ab. ofetch führt `429` zwar in seinen
-  `retryStatusCodes`, setzt `retry` bei POST aber auf 0, weil die Methode nicht idempotent ist –
-  diese Lesezugriffe sind gefahrlos wiederholbar. Jetzt `retry: 5` mit linearem Backoff 1s→5s.
-  ofetch rekursiert mit `retry: retries - 1`, `retryDelay` sieht also den aktuellen Reststand.
+  Derselbe Block traf **auch die Preview-Bilder**: `lib/preview-images.ts` holt sie per `ky` und
+  bekam für jedes notion-gehostete Bild ein 403 („failed to create preview image"), die Karten
+  verloren still ihre Blur-Platzhalter. Der User-Agent liegt deshalb in `lib/user-agent.ts` und wird
+  von beiden Pfaden importiert.
+- **429 beim Prerendering.** `next build` rendert die Seiten parallel vor – per Default ein Worker
+  pro Kern, hier 12 – und lief damit in Notions Rate Limit; der Export brach ab. Zwei Hebel, beide
+  nötig: `experimental.cpus: 3` in `next.config.js` drückt die Anfragerate (der Build ist von Notion
+  begrenzt, nicht von der CPU), und in `lib/notion-api.ts` steht ein exponentieller Backoff.
+  Ein linearer 1s→5s-Ramp reichte **nicht**. ofetch führt `429` zwar in seinen `retryStatusCodes`,
+  setzt `retry` bei POST aber auf 0, weil die Methode nicht idempotent ist – diese Lesezugriffe sind
+  gefahrlos wiederholbar. ofetch rekursiert mit `retry: retries - 1`, `retryDelay` sieht also den
+  aktuellen Reststand. Wirkung: Build von 295s auf 36s, Retries greifen gar nicht mehr.
+- **Collection-Filter wurden komplett ignoriert.** Notion legt die an einer View eingestellten Filter
+  unter `format.property_filters` ab; `query2.filter` ist bei **jeder** View in diesem Workspace
+  `null`. notion-client schickt beim Abfragen der Collection aber nur `query2` mit, also kam alles
+  ungefiltert zurück: die Kategorieseiten listeten sämtliche Beiträge, und der „Featured"-Filter der
+  Startseite lief ebenso ins Leere (fiel nur nicht auf, weil aktuell alle Beiträge diesen Tag tragen).
+  `filterCollectionQueryResults` in `lib/notion.ts` wendet sie jetzt nach dem Laden an, analog zu
+  `sortCollectionQueryResults` und aus demselben Grund **nach** `mergeRecordMaps`.
+
+  Zwei Fallen dabei: (1) Ein Filter-Chip **ohne gewählten Wert** ist ein *inaktiver* Filter, kein
+  Filter auf den leeren String – die Blog-View trägt so einen, und wörtlich genommen wäre die Seite
+  danach leer gewesen. (2) Bei einem unbekannten Operator wird **nicht** gefiltert, sondern eine
+  Warnung geloggt; stilles Wegwerfen von Zeilen wäre dieselbe leise Falle wie der leere RSS-Feed.
+  Implementiert sind `enum_contains`, `enum_does_not_contain`, `is_empty`, `is_not_empty`.
 - **`kyOptions` war ein toter Name.** notion-client ist mit 7.10 von `ky` auf `ofetch` umgestiegen und
   hat die Option in `ofetchOptions` umbenannt. Unter dem alten Namen fiel das 30-Sekunden-Timeout in
   `lib/get-site-map.ts` still unter den Tisch – kein Fehler, nur wirkungslos. `FetchOptions` von
@@ -230,6 +250,19 @@ Dabei beachten: Das `notion-item-<farbe>` muss am inneren `div` bleiben, sonst s
 gesetzten Kategoriefarben weg. Und der Override greift für *jedes* Select-Property, also auf
 `schema.name === 'Tags'` prüfen.
 
+Die **exakten Tag-Werte** aus der Datenbank (nicht raten, `getPageProperty` gibt bei Abweichung
+still `null` zurück):
+
+| Tag                      | Seite                   | Page-ID                            |
+| ------------------------ | ----------------------- | ---------------------------------- |
+| `Musik & Kultur`         | `/musik-kultur`         | `3b246312895c808a81a8c1053ea6e9a6` |
+| `Politik & Gesellschaft` | `/politik-gesellschaft` | `3b246312895c8096830ce682dfbf96af` |
+| `Daten Statistik & KI`   | `/daten-statistik-ki`   | `3b246312895c809e9dc0fa66282337cf` |
+
+Beachte `Daten Statistik & KI` – **ohne Komma und ohne Schrägstrich**, anders als der Seitentitel
+und anders als die sonst übliche Schreibweise. Das Schema-Property heißt `CiOV` (`Tags`,
+`multi_select`).
+
 `/blog` bleibt als ungefilterte Gesamtübersicht bestehen, die Kategorieseiten kommen **nicht** ins
 Menü – sie sind das Ziel der Pills.
 
@@ -261,7 +294,13 @@ und genau deshalb ist ein Prod-Build die verlässliche Prüfung, nicht das Dev-O
 - [ ] Umzug auf `sebakuhn.de` (s. Nächster Schritt) – bewusst ans Ende geschoben, erst nach dem Design
 - [ ] Lange Artikeltitel stehen zentriert über bis zu vier Zeilen (`.notion-title` in
       `styles/notion.css` hat `text-align: center`). Linksbündig wäre ruhiger – noch nicht entschieden.
-- [ ] Kategorie-Pills klickbar machen – s. Kasten „Kategorien sind im Frontend nicht klickbar"
+- [ ] Kategorie-Pills klickbar machen – s. Kasten „Kategorien sind im Frontend nicht klickbar".
+      Bewusst zurückgestellt: bei neun Beiträgen auf drei Kategorien löst Filtern kein reales
+      Problem. Wieder aufmachen, wenn der Bestand deutlich gewachsen ist.
+- [ ] Die Seite „Blog" enthält in Notion **drei** gefilterte Galerien (eine je Kategorie), nicht eine
+      chronologische Liste – `/blog` rendert entsprechend 5+2+3 Karten in drei Blöcken. Vor dem
+      Filter-Fix waren es 3×9. Falls `/blog` eine durchgehende Gesamtübersicht sein soll, gehören
+      dort zwei der drei Galerien raus (in Notion, nicht im Code).
 - [ ] Restliche Advisories sind **nicht selbst behebbar** – alle stecken in Abhängigkeiten fremder
       Pakete: `postcss` (3×, in `next` selbst), `js-cookie` (via `react-use`), `sharp` (via
       `lqip-modern`, nur Build-Zeit für Preview-Bilder), `@babel/core` (low, via `styled-jsx`).
