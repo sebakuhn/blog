@@ -49,16 +49,18 @@ export function FooterImpl() {
         )}
       </div>
 
+      {/* ordered by importance: linkedin, bluesky, github, mastodon.
+          keep in sync with components/PageSocial.tsx */}
       <div className={styles.social}>
-        {config.twitter && (
+        {config.linkedin && (
           <a
-            className={styles.twitter}
-            href={`https://x.com/${config.twitter}`}
-            title={`X @${config.twitter}`}
+            className={styles.linkedin}
+            href={`https://www.linkedin.com/in/${config.linkedin}`}
+            title={`LinkedIn ${config.author}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            <TwitterIcon />
+            <LinkedInIcon />
           </a>
         )}
 
@@ -74,18 +76,6 @@ export function FooterImpl() {
           </a>
         )}
 
-        {config.mastodon && (
-          <a
-            className={styles.mastodon}
-            href={config.mastodon}
-            title={`Mastodon ${config.getMastodonHandle()}`}
-            target='_blank'
-            rel='me noopener noreferrer'
-          >
-            <MastodonIcon />
-          </a>
-        )}
-
         {config.github && (
           <a
             className={styles.github}
@@ -98,15 +88,27 @@ export function FooterImpl() {
           </a>
         )}
 
-        {config.linkedin && (
+        {config.mastodon && (
           <a
-            className={styles.linkedin}
-            href={`https://www.linkedin.com/in/${config.linkedin}`}
-            title={`LinkedIn ${config.author}`}
+            className={styles.mastodon}
+            href={config.mastodon}
+            title={`Mastodon ${config.getMastodonHandle()}`}
+            target='_blank'
+            rel='me noopener noreferrer'
+          >
+            <MastodonIcon />
+          </a>
+        )}
+
+        {config.twitter && (
+          <a
+            className={styles.twitter}
+            href={`https://x.com/${config.twitter}`}
+            title={`X @${config.twitter}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            <LinkedInIcon />
+            <TwitterIcon />
           </a>
         )}
       </div>
