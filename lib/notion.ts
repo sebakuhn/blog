@@ -81,6 +81,160 @@ function getCollectionSortValue(
   return text ?? ''
 }
 
+// ungrouped views keep their ids under `blockIds` / `collection_group_results`,
+// grouped and board views under `results:<type>:<label>` keys
+function getResultBlockIdLists(results: any): string[][] {
+  return [
+    results?.collection_group_results,
+    results,
+    ...Object.entries(results || {})
+      .filter(([key]) => key.startsWith('results:'))
+      .map(([, value]) => value)
+  ]
+    .map((container: any) => container?.blockIds)
+    .filter(Boolean)
+}
+
+interface PropertyFilter {
+  property: string
+  operator: string
+  value?: string
+}
+
+function getPropertyFilters(view: any): PropertyFilter[] {
+  return ((view?.format?.property_filters as any[]) || [])
+    .map((entry) => ({
+      property: entry?.filter?.property,
+      operator: entry?.filter?.filter?.operator,
+      value: entry?.filter?.filter?.value?.value
+    }))
+    .filter((filter) => filter.property && filter.operator)
+}
+
+function getMultiSelectValues(
+  recordMap: ExtendedRecordMap,
+  blockId: string,
+  propertyKey: string
+): string[] {
+  const block = getBlockValue(recordMap.block[blockId]) as any
+  const text = block?.properties?.[propertyKey]?.[0]?.[0]
+
+  if (typeof text !== 'string') return []
+
+  // notion joins multi-select values into one comma separated string, so a
+  // value that itself contains a comma cannot be told apart from two values
+  return text
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+}
+
+function isPropertyEmpty(
+  recordMap: ExtendedRecordMap,
+  blockId: string,
+  propertyKey: string,
+  propertyType: string | undefined
+): boolean {
+  const block = getBlockValue(recordMap.block[blockId]) as any
+
+  // same two special cases as the sort: these live on the block itself
+  if (propertyKey === 'created_time' || propertyType === 'created_time') {
+    return !block?.created_time
+  }
+  if (
+    propertyKey === 'last_edited_time' ||
+    propertyType === 'last_edited_time'
+  ) {
+    return !block?.last_edited_time
+  }
+
+  const propertyValue = block?.properties?.[propertyKey]
+  if (!propertyValue?.length) return true
+
+  if (propertyType === 'date') {
+    return !propertyValue?.[0]?.[1]?.[0]?.[1]?.start_date
+  }
+
+  return !propertyValue?.[0]?.[0]
+}
+
+const warnedFilterOperators = new Set<string>()
+
+function matchesPropertyFilter(
+  recordMap: ExtendedRecordMap,
+  blockId: string,
+  filter: PropertyFilter,
+  schema: any
+): boolean {
+  const propertyType = schema?.[filter.property]?.type
+
+  switch (filter.operator) {
+    case 'enum_contains':
+    case 'enum_does_not_contain': {
+      // a chip without a selected value is an *inactive* filter, not a filter
+      // on the empty string. notion ships one of those on the blog view, and
+      // taking it literally would empty the page.
+      if (!filter.value) return true
+
+      const values = getMultiSelectValues(recordMap, blockId, filter.property)
+      const contains = values.includes(filter.value)
+      return filter.operator === 'enum_contains' ? contains : !contains
+    }
+
+    case 'is_not_empty':
+      return !isPropertyEmpty(recordMap, blockId, filter.property, propertyType)
+
+    case 'is_empty':
+      return isPropertyEmpty(recordMap, blockId, filter.property, propertyType)
+
+    default:
+      // deliberately keep the row. dropping entries we don't understand would
+      // be the same kind of quiet wrong answer as the empty rss feed was —
+      // better to show too much and say so than to hide posts silently.
+      if (!warnedFilterOperators.has(filter.operator)) {
+        warnedFilterOperators.add(filter.operator)
+        console.warn(
+          `notion: unsupported collection filter operator "${filter.operator}" — results left unfiltered`
+        )
+      }
+
+      return true
+  }
+}
+
+// Notion stores the filters configured on a collection view under
+// `format.property_filters`; `query2.filter` is `null` on every view in this
+// workspace. notion-client only forwards `query2` when it queries the
+// collection, so the filter never reaches Notion's API and every view comes
+// back unfiltered — the category pages listed all posts, and the home page's
+// "Featured" filter is ignored the same way. Apply them here instead.
+function filterCollectionQueryResults(recordMap: ExtendedRecordMap): void {
+  for (const [collectionId, views] of Object.entries(
+    recordMap.collection_query || {}
+  )) {
+    const schema = (getBlockValue(recordMap.collection[collectionId]) as any)
+      ?.schema
+
+    for (const [viewId, results] of Object.entries(views as any)) {
+      const view = getBlockValue(recordMap.collection_view[viewId]) as any
+      const filters = getPropertyFilters(view)
+
+      if (!filters.length || !schema) continue
+
+      for (const blockIds of getResultBlockIdLists(results)) {
+        const kept = blockIds.filter((blockId) =>
+          filters.every((filter) =>
+            matchesPropertyFilter(recordMap, blockId, filter, schema)
+          )
+        )
+
+        // mutate in place — the array is referenced from the result container
+        blockIds.splice(0, blockIds.length, ...kept)
+      }
+    }
+  }
+}
+
 // react-notion-x's `getPage` returns collection query results in whatever
 // (often stale) order Notion's API last cached them in, ignoring the sort
 // configured on the collection view. Re-sort them here so pages appear in
@@ -98,20 +252,7 @@ function sortCollectionQueryResults(recordMap: ExtendedRecordMap): void {
 
       if (!sorts?.length || !schema) continue
 
-      // ungrouped views use `blockIds` / `collection_group_results`, grouped
-      // and board views keep their ids under `results:<type>:<label>` keys
-      const containers = [
-        (results as any)?.collection_group_results,
-        results as any,
-        ...Object.entries((results as any) || {})
-          .filter(([key]) => key.startsWith('results:'))
-          .map(([, value]) => value)
-      ]
-
-      for (const container of containers) {
-        const blockIds = (container as any)?.blockIds
-        if (!blockIds) continue
-
+      for (const blockIds of getResultBlockIdLists(results)) {
         blockIds.sort((a: string, b: string) => {
           for (const { property, direction } of sorts) {
             const propertyType = schema[property]?.type
@@ -167,7 +308,9 @@ export async function getPage(pageId: string): Promise<ExtendedRecordMap> {
     }
   }
 
-  // must run after the merge above, which replaces `collection_query` wholesale
+  // both must run after the merge above, which replaces `collection_query`
+  // wholesale. filter first so the sort only has to touch what survives.
+  filterCollectionQueryResults(recordMap)
   sortCollectionQueryResults(recordMap)
 
   if (isPreviewImageSupportEnabled) {
