@@ -4,6 +4,7 @@ import * as config from '@/lib/config'
 import { BlueskyIcon } from '@/lib/icons/bluesky'
 import { GitHubIcon } from '@/lib/icons/github'
 import { LinkedInIcon } from '@/lib/icons/linkedin'
+import { MastodonIcon } from '@/lib/icons/mastodon'
 import { MoonIcon } from '@/lib/icons/moon'
 import { SunIcon } from '@/lib/icons/sun'
 import { TwitterIcon } from '@/lib/icons/twitter'
@@ -70,6 +71,18 @@ export function FooterImpl() {
             rel='noopener noreferrer'
           >
             <BlueskyIcon />
+          </a>
+        )}
+
+        {config.mastodon && (
+          <a
+            className={styles.mastodon}
+            href={config.mastodon}
+            title={`Mastodon ${config.getMastodonHandle()}`}
+            target='_blank'
+            rel='me noopener noreferrer'
+          >
+            <MastodonIcon />
           </a>
         )}
 
