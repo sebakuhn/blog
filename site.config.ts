@@ -67,7 +67,7 @@ export default siteConfig({
       pageId: '17246312895c81e38fddc89fd9ab11aa'
     },
     {
-      title: 'Kontakt',
+      title: 'Kontakt & Impressum',
       pageId: '17246312895c81dcbe88ee2269e0cd0b'
     }
   ]
