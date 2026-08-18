@@ -28,7 +28,9 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const feed = new RSS({
     title: config.name,
     site_url: config.host,
-    feed_url: `${config.host}/feed.xml`,
+    // the route is `pages/feed.tsx`, so the self-referencing url is `/feed` --
+    // `/feed.xml` doesn't exist and `PageHead.tsx` already links to `/feed`
+    feed_url: `${config.host}/feed`,
     language: config.language,
     ttl: ttlMinutes
   })
