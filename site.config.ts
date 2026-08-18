@@ -15,6 +15,10 @@ export default siteConfig({
   domain: 'blog-one-sage.vercel.app',
   author: 'Sebastian Kuhn',
 
+  // feeds the RSS `<language>` tag; without it `lib/config.ts` falls back to
+  // 'en', which contradicted `<Html lang='de'>` in `pages/_document.tsx`
+  language: 'de',
+
   // open graph metadata (optional)
   description: 'Blog über Musik & Kultur, Politik & Gesellschaft, Daten & KI',
 
