@@ -38,7 +38,10 @@ export default async function OGImage(
     })
   }
   const pageInfo = pageInfoOrError.data
-  console.log(pageInfo)
+  if (libConfig.isDev) {
+    // edge function: this would log on every single request in production
+    console.log(pageInfo)
+  }
 
   return new ImageResponse(
     <div
