@@ -24,7 +24,6 @@ import { searchNotion } from '@/lib/search-notion'
 import { useDarkMode } from '@/lib/use-dark-mode'
 
 import { Footer } from './Footer'
-import { GitHubShareButton } from './GitHubShareButton'
 import { Loading } from './Loading'
 import { NotionPageHeader } from './NotionPageHeader'
 import { Page404 } from './Page404'
@@ -258,20 +257,23 @@ export function NotionPage({
 
   const title = getBlockTitle(block, recordMap) || site.name
 
-  console.log('notion page', {
-    isDev: config.isDev,
-    title,
-    pageId,
-    rootNotionPageId: site.rootNotionPageId,
-    recordMap
-  })
+  if (config.isDev) {
+    // this runs on every client render and dumps the full recordMap (~233 kB)
+    // into the browser console, so it stays out of production
+    console.log('notion page', {
+      title,
+      pageId,
+      rootNotionPageId: site.rootNotionPageId,
+      recordMap
+    })
 
-  if (!config.isServer) {
-    // add important objects to the window global for easy debugging
-    const g = window as any
-    g.pageId = pageId
-    g.recordMap = recordMap
-    g.block = block
+    if (!config.isServer) {
+      // add important objects to the window global for easy debugging
+      const g = window as any
+      g.pageId = pageId
+      g.recordMap = recordMap
+      g.block = block
+    }
   }
 
   const canonicalPageUrl = config.isDev
@@ -328,8 +330,6 @@ export function NotionPage({
         pageAside={pageAside}
         footer={<Footer />}
       />
-
-      <GitHubShareButton />
     </>
   )
 }
