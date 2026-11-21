@@ -169,16 +169,31 @@ body {
   margin-bottom: 0.3em;
 }
 
+/* Content starts at Notion's Heading 1: react-notion-x shifts every level down
+   by one (title = <h1>, Heading 1 = <h2>), so that's the only way to a gapless
+   outline. The sizes are one step smaller than Notion's ramp to keep the
+   visual weight it had when the sections were Heading 2.
+
+   Heading 1 always carries the accent — one fixed meaning ("a main section
+   starts here") instead of hand-picked colours in Notion. Same specificity as
+   Notion's .notion-<colour> classes and loaded later, so it wins over them. */
 .notion-h1 {
-  font-size: 2.1rem;
+  font-size: 1.75rem;
+  color: var(--t-accent);
+}
+
+/* A purple text colour inside the heading would show Notion's paler purple. */
+.notion-h1 .notion-purple {
+  color: inherit;
 }
 
 .notion-h2 {
-  font-size: 1.75rem;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
 }
 
 .notion-h3 {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   letter-spacing: -0.01em;
 }
 
