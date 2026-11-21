@@ -300,9 +300,13 @@ export async function getPage(pageId: string): Promise<ExtendedRecordMap> {
     const navigationLinkRecordMaps = await getNavigationLinkPages()
 
     if (navigationLinkRecordMaps?.length) {
+      // the freshly fetched page must be the second argument: mergeRecordMaps
+      // lets B win, and the navigation pages are memoized for the lifetime of
+      // the server instance — otherwise they overwrite newer content on
+      // revalidation of exactly those pages
       recordMap = navigationLinkRecordMaps.reduce(
         (map, navigationLinkRecordMap) =>
-          mergeRecordMaps(map, navigationLinkRecordMap),
+          mergeRecordMaps(navigationLinkRecordMap, map),
         recordMap
       )
     }
