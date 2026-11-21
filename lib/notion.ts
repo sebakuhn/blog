@@ -300,11 +300,20 @@ export async function getPage(pageId: string): Promise<ExtendedRecordMap> {
     const navigationLinkRecordMaps = await getNavigationLinkPages()
 
     if (navigationLinkRecordMaps?.length) {
-      recordMap = navigationLinkRecordMaps.reduce(
+      const pageRecordMap = recordMap
+      const mergedRecordMap = navigationLinkRecordMaps.reduce(
         (map, navigationLinkRecordMap) =>
           mergeRecordMaps(map, navigationLinkRecordMap),
-        recordMap
+        pageRecordMap
       )
+
+      // the navigation pages are memoized for the lifetime of the server
+      // instance and mergeRecordMaps lets its second argument win, so they
+      // would overwrite newer content when one of them is revalidated. lay
+      // the fresh page over it once more. it must stay the *second* argument:
+      // the page block has to remain the first key, NotionPage takes
+      // Object.keys(recordMap.block)[0] as the page
+      recordMap = mergeRecordMaps(mergedRecordMap, pageRecordMap)
     }
   }
 
